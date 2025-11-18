@@ -38,10 +38,9 @@ function App() {
     setMemoryStatus('');
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/add-fact`, {
+      const response = await api.post('/add-fact', {
         text: memoryText
       });
-
       setMemoryStatus(`✅ Added: ${response.data.nodes_created} nodes, ${response.data.edges_created} edges`);
       setMemoryText('');
       setRefreshKey(k => k + 1); // Trigger graph refresh
@@ -63,10 +62,10 @@ function App() {
     setAnswer(null);
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/ask`, {
+      const response = await api.get('/ask', {
         params: { q: question }
       });
-
+      
       setAnswer(response.data);
     } catch (error) {
       setAnswer({ error: error.response?.data?.detail || error.message });
