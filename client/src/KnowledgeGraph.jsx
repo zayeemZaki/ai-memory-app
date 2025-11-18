@@ -2,6 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import axios from 'axios';
 
+// 1. Get the correct URL and Key from the environment
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_KEY = import.meta.env.VITE_API_SECRET || "default-dev-secret";
+
 const KnowledgeGraph = ({ refreshTrigger }) => {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
     const graphRef = useRef();
@@ -9,10 +13,13 @@ const KnowledgeGraph = ({ refreshTrigger }) => {
     // Fetch graph data from API
     const fetchGraph = async () => {
         try {
-            const response = await axios.get('http://localhost:5001/graph');
-            // API returns { nodes: [...], links: [...] }
-            // We might need to wrap it if your API returns { success: true, nodes: ... }
-            // Adjust based on your exact API response structure
+            // 2. Use the dynamic URL and include the security header
+            const response = await axios.get(`${API_BASE_URL}/graph`, {
+                headers: {
+                    'x-api-key': API_KEY
+                }
+            });
+
             const data = response.data; 
             if (data.nodes && data.links) {
                 setGraphData(data);
@@ -35,11 +42,11 @@ const KnowledgeGraph = ({ refreshTrigger }) => {
                 width={800}
                 height={400}
                 graphData={graphData}
-                nodeLabel="name"             // Show 'name' property on hover
-                nodeAutoColorBy="group"      // Color by group if you have it
-                linkDirectionalArrowLength={6} // Draw arrows for relationships
+                nodeLabel="name"
+                nodeAutoColorBy="group"
+                linkDirectionalArrowLength={6}
                 linkDirectionalArrowRelPos={1}
-                linkLabel="name"             // Show relationship type on hover
+                linkLabel="name"
             />
         </div>
     );
