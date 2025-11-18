@@ -9,7 +9,7 @@ async def validate_api_key(api_key_header: str = Security(api_key_header)):
     """
     Validate that the incoming request has the correct API Key.
     """
-    if api_key_header == config.API_SECRET:
+    if api_key_header == config.VITE_API_SECRET:
         return api_key_header
     
     raise HTTPException(

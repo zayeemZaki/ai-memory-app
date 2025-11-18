@@ -20,7 +20,7 @@ class Config:
     PORT = int(os.getenv("PORT", 5001))
     HOST = os.getenv("HOST", "0.0.0.0")
     
-    API_SECRET = os.getenv("API_SECRET", "default-dev-secret")
+    VITE_API_SECRET = os.getenv("VITE_API_SECRET", "default-dev-secret")
 
     @classmethod
     def validate(cls):
