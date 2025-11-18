@@ -6,6 +6,13 @@ import KnowledgeGraph from './KnowledgeGraph';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const API_KEY = import.meta.env.VITE_API_SECRET || "default-dev-secret";
 
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'x-api-key': API_KEY 
+  }
+});
+
 function App() {
   // Left Panel State
   const [memoryText, setMemoryText] = useState('');
@@ -67,13 +74,6 @@ function App() {
       setAskLoading(false);
     }
   };
-
-  const api = axios.create({
-    baseURL: 'http://localhost:5001',
-    headers: {
-      'x-api-key': API_KEY 
-    }
-  });
 
   return (
     <div style={styles.container}>
