@@ -55,8 +55,12 @@ function ChatInterface({ onGraphUpdate, sessionId }) {
         }, 20);
     };
 
-    const handleSend = async () => {
+    const [actionType, setActionType] = useState('ask_question'); // Default to ask
+
+    const handleSend = async (overrideActionType = null) => {
         if (!input.trim() || isLoading) return;
+
+        const selectedAction = overrideActionType || actionType;
 
         const userMessage = {
             id: Date.now(),
@@ -79,6 +83,7 @@ function ChatInterface({ onGraphUpdate, sessionId }) {
 
             const response = await api.post('/chat', {
                 message: input,
+                action_type: selectedAction,
                 history: history,
                 session_id: sessionId
             });
@@ -177,25 +182,49 @@ function ChatInterface({ onGraphUpdate, sessionId }) {
             </div>
 
             <div style={styles.inputContainer}>
-                <textarea
-                    style={styles.input}
-                    placeholder="Type a fact or ask a question..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    rows={1}
-                    disabled={isLoading}
-                />
-                <button
-                    style={{
-                        ...styles.sendButton,
-                        ...(isLoading || !input.trim() ? styles.sendButtonDisabled : {})
-                    }}
-                    onClick={handleSend}
-                    disabled={isLoading || !input.trim()}
-                >
-                    {isLoading ? '⏳' : '➤'}
-                </button>
+                <div style={styles.actionSelector}>
+                    <button
+                        style={{
+                            ...styles.actionButton,
+                            ...(actionType === 'add_fact' ? styles.actionButtonActive : {})
+                        }}
+                        onClick={() => setActionType('add_fact')}
+                        disabled={isLoading}
+                    >
+                        📝 Add Fact
+                    </button>
+                    <button
+                        style={{
+                            ...styles.actionButton,
+                            ...(actionType === 'ask_question' ? styles.actionButtonActive : {})
+                        }}
+                        onClick={() => setActionType('ask_question')}
+                        disabled={isLoading}
+                    >
+                        🔍 Ask Question
+                    </button>
+                </div>
+                <div style={styles.inputRow}>
+                    <textarea
+                        style={styles.input}
+                        placeholder={actionType === 'add_fact' ? 'Type a fact to add...' : 'Ask a question...'}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        rows={1}
+                        disabled={isLoading}
+                    />
+                    <button
+                        style={{
+                            ...styles.sendButton,
+                            ...(isLoading || !input.trim() ? styles.sendButtonDisabled : {})
+                        }}
+                        onClick={() => handleSend()}
+                        disabled={isLoading || !input.trim()}
+                    >
+                        {isLoading ? '⏳' : '➤'}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -260,10 +289,35 @@ const styles = {
     },
     inputContainer: {
         display: 'flex',
+        flexDirection: 'column',
         gap: '12px',
         padding: '16px',
         borderTop: '1px solid #eee',
         backgroundColor: '#fafafa'
+    },
+    actionSelector: {
+        display: 'flex',
+        gap: '8px',
+        justifyContent: 'center'
+    },
+    actionButton: {
+        padding: '8px 16px',
+        fontSize: '14px',
+        border: '2px solid #ddd',
+        borderRadius: '20px',
+        backgroundColor: '#fff',
+        cursor: 'pointer',
+        transition: 'all 0.3s',
+        fontWeight: '500'
+    },
+    actionButtonActive: {
+        backgroundColor: '#4CAF50',
+        color: 'white',
+        borderColor: '#4CAF50'
+    },
+    inputRow: {
+        display: 'flex',
+        gap: '12px'
     },
     input: {
         flex: 1,

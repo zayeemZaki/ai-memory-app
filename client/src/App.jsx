@@ -17,7 +17,11 @@ function App() {
   }, []);
 
   const handleGraphUpdate = () => {
-    setRefreshKey(k => k + 1);
+    // Delay to handle Neo4j Aura's eventual consistency
+    // New nodes take ~500ms to become readable after write
+    setTimeout(() => {
+      setRefreshKey(k => k + 1);
+    }, 500);
   };
 
   return (

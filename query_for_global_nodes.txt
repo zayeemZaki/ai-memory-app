@@ -1,0 +1,81 @@
+// --- 1. INFRASTRUCTURE (Fixed Syntax) ---
+// Create indexes for each label specifically to avoid syntax errors
+CREATE INDEX person_norm_id IF NOT EXISTS FOR (n:Person) ON (n.normalized_id);
+CREATE INDEX project_norm_id IF NOT EXISTS FOR (n:Project) ON (n.normalized_id);
+CREATE INDEX tech_norm_id IF NOT EXISTS FOR (n:Technology) ON (n.normalized_id);
+
+// Create session indexes for security filtering
+CREATE INDEX person_session IF NOT EXISTS FOR (n:Person) ON (n.session_id);
+CREATE INDEX project_session IF NOT EXISTS FOR (n:Project) ON (n.session_id);
+CREATE INDEX tech_session IF NOT EXISTS FOR (n:Technology) ON (n.session_id);
+
+// --- 2. NODES (Canonical Data) ---
+// Create Zayeem
+MERGE (z:Person {normalized_id: 'zayeem'})
+ON CREATE SET 
+    z.name = 'Zayeem', 
+    z.role = 'Software Engineer', 
+    z.status = 'Looking for full-time roles', 
+    z.session_id = 'global', 
+    z.created_at = datetime()
+ON MATCH SET z.session_id = 'global';
+
+// Create Project
+MERGE (p:Project {normalized_id: 'ai_memory_system'})
+ON CREATE SET 
+    p.name = 'AI Memory System', 
+    p.type = 'Full-stack Application', 
+    p.description = 'Knowledge graph with AI-powered chat interface', 
+    p.session_id = 'global', 
+    p.created_at = datetime()
+ON MATCH SET p.session_id = 'global';
+
+// Create Technologies
+MERGE (t1:Technology {normalized_id: 'python'}) 
+    ON CREATE SET t1.name = 'Python', t1.type = 'Language', t1.session_id = 'global'
+    ON MATCH SET t1.session_id = 'global';
+
+MERGE (t2:Technology {normalized_id: 'react'}) 
+    ON CREATE SET t2.name = 'React', t2.type = 'Framework', t2.session_id = 'global'
+    ON MATCH SET t2.session_id = 'global';
+
+MERGE (t3:Technology {normalized_id: 'neo4j'}) 
+    ON CREATE SET t3.name = 'Neo4j', t3.type = 'Database', t3.session_id = 'global'
+    ON MATCH SET t3.session_id = 'global';
+
+MERGE (t4:Technology {normalized_id: 'google_gemini'}) 
+    ON CREATE SET t4.name = 'Google Gemini', t4.type = 'AI Model', t4.session_id = 'global'
+    ON MATCH SET t4.session_id = 'global';
+
+// --- 3. RELATIONSHIPS ---
+// Connect Zayeem -> Project
+MATCH (z:Person {normalized_id: 'zayeem'})
+MATCH (p:Project {normalized_id: 'ai_memory_system'})
+MERGE (z)-[r1:DEVELOPED]->(p)
+    ON CREATE SET r1.session_id = 'global', r1.created_at = datetime()
+    ON MATCH SET r1.session_id = 'global';
+
+// Connect Project -> Tech Stack
+MATCH (p:Project {normalized_id: 'ai_memory_system'})
+MATCH (t1:Technology {normalized_id: 'python'})
+MERGE (p)-[r2:USES]->(t1)
+    ON CREATE SET r2.session_id = 'global', r2.created_at = datetime()
+    ON MATCH SET r2.session_id = 'global';
+
+MATCH (p:Project {normalized_id: 'ai_memory_system'})
+MATCH (t2:Technology {normalized_id: 'react'})
+MERGE (p)-[r3:USES]->(t2)
+    ON CREATE SET r3.session_id = 'global', r3.created_at = datetime()
+    ON MATCH SET r3.session_id = 'global';
+
+MATCH (p:Project {normalized_id: 'ai_memory_system'})
+MATCH (t3:Technology {normalized_id: 'neo4j'})
+MERGE (p)-[r4:USES]->(t3)
+    ON CREATE SET r4.session_id = 'global', r4.created_at = datetime()
+    ON MATCH SET r4.session_id = 'global';
+
+MATCH (p:Project {normalized_id: 'ai_memory_system'})
+MATCH (t4:Technology {normalized_id: 'google_gemini'})
+MERGE (p)-[r5:USES]->(t4)
+    ON CREATE SET r5.session_id = 'global', r5.created_at = datetime()
+    ON MATCH SET r5.session_id = 'global';

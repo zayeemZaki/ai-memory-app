@@ -65,6 +65,7 @@ class AddFactResponse(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    action_type: str  # 'add_fact' or 'ask_question'
     history: list[dict] = []
     session_id: str = None
 

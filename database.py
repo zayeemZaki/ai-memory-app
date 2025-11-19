@@ -81,19 +81,26 @@ class Neo4jDatabase:
 
         # --- 1. CREATE NODES ---
         for node in graph_data.get("nodes", []):
-            node_id = node.get("id")
+            node_id = node.get("id")  # Already lowercase from extract_graph_structure
             label = node.get("label", "Entity")
             properties = node.get("properties", {})
             name = properties.get("name", node_id)
+            
+            # CRITICAL FIX: Normalize ID to lowercase for case-insensitive matching
+            # This ensures "Zayeem", "zayeem", "ZAYEEM" all map to the same node
+            normalized_id = node_id.lower() if node_id else name.lower()
 
-            # We MERGE only on 'name' to find existing global nodes
-            # We use ON CREATE to set the session_id only if it's a NEW node
-            params = {"name": name, "session_id": session_id}
+            # MERGE on normalized_id (guaranteed lowercase) instead of name
+            params = {
+                "normalized_id": normalized_id,
+                "name": name,  # Display name (Title Case)
+                "session_id": session_id
+            }
             
             # Build dynamic property setting
             set_clauses = []
             for key, value in properties.items():
-                if key != "name":
+                if key not in ["name"]:
                     param_key = f"prop_{key}"
                     set_clauses.append(f"n.{key} = ${param_key}")
                     params[param_key] = value
@@ -103,13 +110,20 @@ class Neo4jDatabase:
                 set_clause_str = ", " + set_clause_str
 
             merge_query = f"""
-            MERGE (n:{label} {{name: $name}})
+            MERGE (n:{label} {{normalized_id: $normalized_id}})
             ON CREATE SET 
+                n.name = $name,
                 n.session_id = $session_id,
                 n.created_at = datetime(),
                 n.updated_at = datetime()
                 {set_clause_str}
             ON MATCH SET 
+                n.name = $name,
+                n.session_id = CASE 
+                    WHEN n.session_id = 'global' THEN 'global'
+                    WHEN n.session_id = $session_id THEN $session_id
+                    ELSE n.session_id
+                END,
                 n.updated_at = datetime()
             RETURN elementId(n) as element_id, n.name as name
             """
@@ -147,6 +161,11 @@ class Neo4jDatabase:
             ON CREATE SET 
                 r.session_id = $session_id,
                 r.created_at = datetime()
+            ON MATCH SET
+                r.session_id = CASE
+                    WHEN r.session_id = 'global' THEN 'global'
+                    ELSE $session_id
+                END
             RETURN elementId(r) as element_id
             """
 
@@ -189,9 +208,17 @@ class Neo4jDatabase:
         }
 
     def execute_cypher(self, query: str, params: dict = None) -> list:
-        """Execute a raw Cypher query"""
+        """Execute a raw Cypher query with safe session_id handling"""
+        import uuid
+        
+        # CRITICAL FIX: Ensure session_id is never None or a dangerous default
+        safe_params = params or {}
+        if 'session_id' in safe_params and (safe_params['session_id'] is None or safe_params['session_id'] == 'none'):
+            # Use a UUID that will never match a real session
+            safe_params['session_id'] = f'_nonexistent_{uuid.uuid4()}'
+        
         with self.driver.session(database=config.NEO4J_DATABASE) as session:
-            result = session.run(query, params or {})
+            result = session.run(query, safe_params)
             return [record.data() for record in result]
 
     def get_schema(self) -> str:

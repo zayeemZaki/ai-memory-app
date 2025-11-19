@@ -23,32 +23,64 @@ class EmbeddingService:
     def extract_graph_structure(self, text: str) -> dict:
         """Extract structured graph data (nodes and edges) from text using Gemini"""
 
-        prompt = f"""You are a knowledge graph extraction system. Analyze the following text and extract entities (nodes) and their relationships (edges).
+        prompt = f"""You are a knowledge graph extraction system. Extract entities (nodes) and relationships (edges) from the text.
 
-                Return ONLY valid JSON in this exact format:
-                {{
-                "nodes": [
-                    {{"id": "unique_id", "label": "EntityType", "properties": {{"name": "entity_name", "other_property": "value"}}}}
-                ],
-                "edges": [
-                    {{"from": "node_id", "to": "node_id", "type": "RELATIONSHIP_TYPE", "properties": {{}}}}
-                ]
-                }}
+CRITICAL: Follow these DATA STANDARDS exactly. Violating these rules will break the database.
 
-                Rules:
-                1. Use descriptive labels like Person, Company, Location, Concept, etc.
-                2. Each node must have a unique id (use lowercase with underscores)
-                3. Each node must have a "name" property at minimum
-                4. Relationship types should be UPPERCASE_WITH_UNDERSCORES
-                5. Extract meaningful relationships between entities
-                6. Return ONLY the JSON, no other text
+===== MANDATORY FORMAT RULES =====
 
-                Text: {text}
+1. ID FIELDS (snake_case - LOWERCASE WITH UNDERSCORES):
+   - ALL "id" fields MUST be lowercase_with_underscores
+   - "Ohio" → "ohio", "New York" → "new_york", "Zayeem" → "zayeem"
+   - This ensures "Ohio" and "ohio" map to the SAME node
+   - NEVER use capital letters or spaces in IDs
 
-                JSON:"""
+2. NAME PROPERTIES (Title Case - VISIBLE TO USER):
+   - ALL "name" properties MUST be Title Case
+   - "ohio" → "Ohio", "new york" → "New York", "zayeem" → "Zayeem"
+   - This is what users see in the graph
+
+3. RELATIONSHIP TYPES (SCREAMING_SNAKE_CASE - ALL UPPERCASE):
+   - ALL "type" fields MUST be UPPERCASE_WITH_UNDERSCORES
+   - "lives in" → "LIVES_IN", "works at" → "WORKS_AT", "friend of" → "FRIEND_OF"
+   - This ensures "Lives In" and "LIVES_IN" are the SAME relationship
+
+===== EXAMPLES =====
+
+Input: "Zayeem lives in Ohio"
+Output:
+{{
+  "nodes": [
+    {{"id": "zayeem", "label": "Person", "properties": {{"name": "Zayeem"}}}},
+    {{"id": "ohio", "label": "Location", "properties": {{"name": "Ohio"}}}}
+  ],
+  "edges": [
+    {{"from": "zayeem", "to": "ohio", "type": "LIVES_IN", "properties": {{}}}}
+  ]
+}}
+
+Input: "Alice works at Google"
+Output:
+{{
+  "nodes": [
+    {{"id": "alice", "label": "Person", "properties": {{"name": "Alice"}}}},
+    {{"id": "google", "label": "Company", "properties": {{"name": "Google"}}}}
+  ],
+  "edges": [
+    {{"from": "alice", "to": "google", "type": "WORKS_AT", "properties": {{}}}}
+  ]
+}}
+
+===== YOUR TASK =====
+
+Text: {text}
+
+Return ONLY valid JSON. No explanations.
+
+JSON:"""
 
         response = self.client.models.generate_content(
-            model="gemini-2.0-flash-exp", contents=prompt
+            model="gemini-2.5-flash", contents=prompt
         )
 
         # Extract JSON from response
@@ -75,117 +107,106 @@ class EmbeddingService:
         return graph_data
 
     def generate_cypher_query(self, question: str, schema_context: str = None) -> str:
-        """
-        Converts a natural language question into a Cypher query using Gemini.
-        """
-        # 1. Define the schema (The "Map")
-        if not schema_context:
-            schema_context = """
-            Schema:
-            - Nodes: labelled dynamically (e.g., Person, Company, Location, Concept)
-            - Relationships: defined dynamically based on the text (e.g., WORKS_AT, WORKED_AT, LOCATED_IN, CREATED_BY, etc.)
-            - Common properties: 'name' (string), 'id' (string)
-            - Relationship types can be present or past tense depending on the stored fact
-            """
-
-        # 2. The Prompt
-        prompt = f"""
-        You are a Neo4j Cypher Query Expert. Convert the user's question into a Cypher query.
+        # We simplify the prompt to use flexible "CONTAINS" matching
+        # instead of strict relationship types.
         
-        CRITICAL: You must ONLY use the Node Labels and Relationship Types defined in the schema below. 
-        Do not invent new relationship types. If a user asks "Where does he live", look for 'LIVES_IN', 'RESIDES_AT', etc. in the schema and use the closest match.
+        prompt = f"""
+        You are a Neo4j Expert. Write a Cypher query to answer the question.
 
-        {schema_context}
-
+        SECURITY RULE:
+        Every MATCH must be filtered by session_id.
+        Pattern: WHERE (n.session_id = 'global' OR n.session_id = $session_id)
+        
+        CRITICAL: Do NOT assume specific relationship names. Use broad matching.
+        
+        Query Strategy:
+        1. Find nodes that match the entities in the question.
+        2. Return those nodes AND their connected neighbors.
+        3. Filter by session_id ('global' OR $session_id).
+        
+        Example Target Query Structure:
+        MATCH (n)-[r]-(m)
+        WHERE (toLower(n.name) CONTAINS toLower('keyword') OR toLower(m.name) CONTAINS toLower('keyword'))
+        AND (n.session_id = 'global' OR n.session_id = $session_id)
+        RETURN n.name, type(r), m.name
+        LIMIT 20
+        
         Question: "{question}"
         
-        Rules:
-        1. Use 'MATCH' to find patterns.
-        2. WHERE clause: Always use 'toLower(n.name) CONTAINS "value"' for flexible matching.
-        3. RETURN the specific answer (e.g., the node's name), not the whole node.
-        4. Return ONLY the raw Cypher string.
+        Return ONLY the Cypher string.
+        """
         
-        Cypher Query:
-        """
-
         response = self.client.models.generate_content(
-            model="gemini-2.0-flash-exp", contents=prompt
+            model="gemini-2.5-flash", 
+            contents=prompt
         )
-
-        # Clean the response (remove ```cypher ... ``` if Gemini adds it)
-        query = response.text.strip()
-        if query.startswith("```"):
-            query = query.split("\n", 1)[1]
-            if query.endswith("```"):
-                query = query.rsplit("\n", 1)[0]
-
-        return query.strip()
-
-    def classify_message_intent(self, message: str) -> dict:
-        """
-        Classify whether a message is adding a fact or asking a question.
-        """
-        prompt = f"""You are a message classifier. Determine if the user is:
-1. Adding a fact/statement (e.g., "Alice works at Google", "Bob lives in NYC")
-2. Asking a question (e.g., "Where does Alice work?", "Who works at Google?")
-
-Return ONLY valid JSON in this format:
-{{
-    "intent": "add_fact" or "ask_question",
-    "confidence": 0.0 to 1.0
-}}
-
-Message: "{message}"
-
-JSON:"""
-
-        response = self.client.models.generate_content(
-            model="gemini-2.0-flash-exp", contents=prompt
-        )
-
-        response_text = response.text.strip()
-
-        # Remove markdown code blocks if present
-        if response_text.startswith("```json"):
-            response_text = response_text[7:]
-        elif response_text.startswith("```"):
-            response_text = response_text[3:]
-
-        if response_text.endswith("```"):
-            response_text = response_text[:-3]
-
-        response_text = response_text.strip()
-
-        return json.loads(response_text)
+        
+        return response.text.replace("```cypher", "").replace("```", "").strip()
 
     def format_query_results(self, question: str, results: list) -> str:
-        """
-        Format query results into a natural language response.
-        """
         if not results:
-            return "I couldn't find any information about that."
+            return "I couldn't find that information in your memory."
+        
+        # 1. Structure the data with semantic awareness
+        # Keep entity-relationship-entity triples for better context
+        structured_data = []
+        for record in results:
+            entity1 = record.get('entity1', '')
+            relationships = record.get('relationships', [])
+            entity2 = record.get('entity2', '')
+            
+            # Format as structured triples
+            if isinstance(relationships, list):
+                rel_chain = ' -> '.join(relationships)
+                structured_data.append(f"{entity1} --[{rel_chain}]--> {entity2}")
+            else:
+                structured_data.append(f"{entity1} --[{relationships}]--> {entity2}")
+        
+        context_text = "\n".join(structured_data)
 
-        prompt = f"""You are a helpful assistant. Format these database results into a natural, conversational answer.
-
-Question: "{question}"
-
-Results: {json.dumps(results, indent=2)}
-
-Rules:
-1. Give a direct, conversational answer
-2. Don't mention "database" or "query"
-3. If multiple results, list them naturally
-4. Be concise but friendly
-5. If the result is a simple value, just state it directly
-
-Answer:"""
-
+        # 2. The "Semantic Sniper" Prompt
+        prompt = f"""
+        You are a precise Knowledge Graph Answer Engine with semantic understanding.
+        
+        User Question: "{question}"
+        
+        Graph Paths Found:
+        {context_text}
+        
+        CRITICAL RULES:
+        1. ONLY use DIRECT relationships that answer the question
+        2. If the path has multiple hops (A -> B -> C), check if the relationship chain makes semantic sense
+        3. "FRIEND_OF" does NOT transfer properties (if A is friend of B, and B loves C, then A does NOT love C)
+        4. "WORKS_AT", "LIVES_IN", "LOVES", "HAS_HOBBY" are DIRECT properties
+        5. If you only find INDIRECT connections through friends/associates, say "I don't have that information"
+        6. Be brief and direct
+        
+        Examples:
+        Q: "What does Zayeem love?"
+        Paths: "Zayeem --[LOVES]--> Football"
+        Answer: "Zayeem loves Football."
+        
+        Q: "What does Zayeem love?"
+        Paths: "Zayeem --[FRIEND_OF]--> Subham"
+               "Subham --[LOVES]--> Football"
+        Answer: "I don't have information about what Zayeem loves. I only know that his friend Subham loves Football."
+        
+        Q: "Where does Alice live?"
+        Paths: "Alice --[LIVES_IN]--> Ohio"
+        Answer: "Alice lives in Ohio."
+        
+        Q: "Where does Alice live?"
+        Paths: "Alice --[FRIEND_OF, LIVES_IN]--> Bob --[LIVES_IN]--> Ohio"
+        Answer: "I don't have information about where Alice lives. I only know her friend Bob lives in Ohio."
+        
+        Answer:"""
+        
         response = self.client.models.generate_content(
-            model="gemini-2.0-flash-exp", contents=prompt
+            model="gemini-2.5-flash",
+            contents=prompt
         )
-
         return response.text.strip()
-
+    
     # Add this method to EmbeddingService class
     def rewrite_query(self, original_query: str, chat_history: list) -> str:
         """
@@ -215,10 +236,198 @@ Answer:"""
         Standalone Question:"""
 
         response = self.client.models.generate_content(
-            model="gemini-2.0-flash-exp", contents=prompt
+            model="gemini-2.5-flash", contents=prompt
         )
 
         return response.text.strip()
+
+    def process_query_optimized(self, query: str, history: list) -> dict:
+        """
+        PERFORMANCE OPTIMIZATION: Single LLM call replacing 3 sequential calls.
+        Combines: rewrite_query + extract_keywords into one structured output.
+        
+        Returns:
+        {
+            "rewritten_query": "standalone question",
+            "keywords": ["Entity1", "Entity2"]
+        }
+        """
+        if not history:
+            # No history means no rewriting needed, just extract keywords
+            return {
+                "rewritten_query": query,
+                "keywords": self.extract_keywords(query)
+            }
+        
+        # Format history for context
+        history_text = "\n".join(
+            [f"{msg['role']}: {msg['content']}" for msg in history[-4:]]
+        )
+        
+        prompt = f"""
+        You are a Query Processing Engine. Perform TWO tasks in ONE response:
+        
+        Task 1 - Query Rewriting:
+        Rewrite the current question to be standalone by replacing pronouns with specific names from the chat history.
+        
+        Task 2 - Keyword Extraction:
+        Extract important entities (names, places, companies, objects) from the REWRITTEN query.
+        
+        Chat History:
+        {history_text}
+        
+        Current Question: "{query}"
+        
+        Rules:
+        1. If the question is already standalone, return it as-is
+        2. Replace pronouns (he, she, it, they, etc.) with specific names
+        3. Extract only proper nouns and significant entities
+        4. Return keywords in Title Case
+        5. If no keywords found, return empty array
+        
+        Example:
+        Input: "where does he live?"
+        History: "user: Zayeem is my friend"
+        Output:
+        {{
+          "rewritten_query": "Where does Zayeem live?",
+          "keywords": ["Zayeem"]
+        }}
+        
+        Return ONLY valid JSON with these two fields:
+        {{
+          "rewritten_query": "...",
+          "keywords": ["..."]
+        }}
+        
+        JSON:"""
+        
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json"
+                }
+            )
+            
+            result = json.loads(response.text.strip())
+            
+            # Validate structure
+            if "rewritten_query" not in result or "keywords" not in result:
+                raise ValueError("Missing required fields in response")
+            
+            # Ensure keywords is a list
+            if not isinstance(result["keywords"], list):
+                result["keywords"] = []
+            
+            return result
+            
+        except Exception as e:
+            print(f"⚠️ Optimized query processing error: {e}. Falling back to original.")
+            return {
+                "rewritten_query": query,
+                "keywords": []
+            }
+
+    def extract_keywords(self, query: str) -> list:
+        """
+        Extracts important keywords/entities from the query using AI.
+        These keywords will be used for deterministic Cypher query building.
+        """
+        prompt = f"""
+        You are a keyword extraction system. Extract the most important entities and concepts from the query.
+        
+        Rules:
+        1. Extract proper nouns (names, places, companies, etc.)
+        2. Extract significant common nouns (job titles, hobbies, objects, etc.)
+        3. Return keywords in Title Case format (e.g., "Zayeem", "Ohio", "Guitar")
+        4. Return ONLY a JSON array of strings, nothing else
+        5. If no meaningful keywords, return empty array []
+        
+        Examples:
+        Query: "Where does Zayeem live?"
+        Output: ["Zayeem"]
+        
+        Query: "What hobbies does he have?"
+        Output: []
+        
+        Query: "Tell me about Alice's job at Google"
+        Output: ["Alice", "Google"]
+        
+        Query: "{query}"
+        
+        Output:"""
+
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json"
+                }
+            )
+            
+            keywords = json.loads(response.text.strip())
+            
+            # Validate it's a list
+            if not isinstance(keywords, list):
+                return []
+            
+            # Filter out empty strings and return
+            return [k.strip() for k in keywords if k and k.strip()]
+            
+        except Exception as e:
+            print(f"⚠️ Keyword Extraction Error: {e}. Returning empty list.")
+            return []
+
+    def build_secure_cypher_query(self, keywords: list) -> str:
+        """
+        Builds a deterministic, secure Cypher query with hardcoded security filters.
+        Uses TWO-HOP SEARCH for better connectivity (finds nodes up to 2 steps away).
+        
+        This function is MATHEMATICALLY IMPOSSIBLE to leak data because:
+        1. The security filter is hardcoded in Python (not AI-generated)
+        2. The session_id check is always present on ALL nodes in the path
+        3. Keywords are passed as parameters, not interpolated as strings
+        4. The query structure is FIXED and cannot be manipulated by AI
+        """
+        if not keywords:
+            # If no keywords, return a broad query that shows recent activity
+            # Use variable-length path [*1..2] for two-hop connectivity
+            return """
+            MATCH path = (n)-[*1..2]-(m)
+            WHERE ALL(node IN nodes(path) WHERE node.session_id = 'global' OR node.session_id = $session_id)
+            WITH n, m, relationships(path) as rels, n.created_at as created
+            RETURN DISTINCT n.name as entity1, 
+                   [r IN rels | type(r)] as relationships, 
+                   m.name as entity2
+            ORDER BY created DESC
+            LIMIT 20
+            """
+        
+        # THE SECURITY FIX + TWO-HOP SEARCH (with semantic priority)
+        # MATCH (n)-[*1..2]-(m) finds paths of length 1 OR 2
+        # This means if Guitar -> Hobby -> Zayeem, we'll find it!
+        # ALL(node IN nodes(path) ...) ensures EVERY node in the path is security-checked
+        # ORDER BY path length to prioritize direct connections
+        query = """
+        MATCH path = (n)-[*1..2]-(m)
+        WHERE (
+            ANY(kw IN $keywords WHERE toLower(n.name) CONTAINS toLower(kw))
+            OR ANY(kw IN $keywords WHERE toLower(m.name) CONTAINS toLower(kw))
+        )
+        AND ALL(node IN nodes(path) WHERE node.session_id = 'global' OR node.session_id = $session_id)
+        WITH n, m, relationships(path) as rels, length(path) as path_length
+        ORDER BY path_length ASC
+        RETURN DISTINCT n.name as entity1, 
+               [r IN rels | type(r)] as relationships, 
+               m.name as entity2,
+               path_length
+        LIMIT 20
+        """
+        
+        return query
 
 
 # Global embedding service instance
