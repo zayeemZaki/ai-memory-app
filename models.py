@@ -62,3 +62,13 @@ class AddFactResponse(BaseModel):
     graph_data: dict
     nodes: list[GraphNode]
     edges: list[GraphEdge]
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[dict] = []
+
+class ChatResponse(BaseModel):
+    success: bool
+    action: str  # 'add_fact' or 'ask_question'
+    response: str
+    details: dict = None
