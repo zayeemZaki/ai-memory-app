@@ -280,15 +280,18 @@ async def get_graph_data(session_id: str = Query(None)):
     """
     try:
         # Fetch global nodes + session-specific nodes
-        # CRITICAL: Prioritize session nodes first, then newest global nodes
+        # CRITICAL: Include relationship session_id to mark nodes touched in this session
         query = """
         MATCH (n)-[r]->(m)
         WHERE (n.session_id = 'global' OR n.session_id = $session_id)
           AND (m.session_id = 'global' OR m.session_id = $session_id)
-        RETURN elementId(n) as source_id, n.name as source_name, labels(n) as source_labels, n.session_id as source_session,
-               elementId(m) as target_id, m.name as target_name, labels(m) as target_labels, m.session_id as target_session,
+          AND (r.session_id = 'global' OR r.session_id = $session_id)
+        RETURN elementId(n) as source_id, n.name as source_name, labels(n) as source_labels, 
+               n.session_id as source_session, r.session_id as rel_session,
+               elementId(m) as target_id, m.name as target_name, labels(m) as target_labels, 
+               m.session_id as target_session,
                elementId(r) as rel_id, type(r) as rel_type
-        ORDER BY n.session_id DESC, n.created_at DESC
+        ORDER BY r.session_id DESC, n.created_at DESC
         LIMIT 1000
         """
         # Session ID is now safe due to execute_cypher UUID fix
@@ -299,29 +302,43 @@ async def get_graph_data(session_id: str = Query(None)):
         edges = []
 
         for row in results:
+            # Check if this relationship was created in current session
+            rel_is_session = row.get("rel_session") == session_id
+            
             # Process source node
             n_id = row["source_id"]
             if n_id not in nodes:
+                # Node is "session" if: node OR relationship belongs to session
+                is_session_node = row.get("source_session") == session_id or rel_is_session
                 nodes[n_id] = {
                     "id": n_id,
                     "group": (
                         row["source_labels"][0] if row["source_labels"] else "Entity"
                     ),
                     "name": row["source_name"] or "Unknown",
-                    "isGlobal": row.get("source_session") == "global"
+                    "isGlobal": not is_session_node  # Show green if touched in session
                 }
+            else:
+                # If node appears in a session relationship, mark as session node
+                if row.get("source_session") == session_id or rel_is_session:
+                    nodes[n_id]["isGlobal"] = False
 
             # Process target node
             m_id = row["target_id"]
             if m_id not in nodes:
+                is_session_node = row.get("target_session") == session_id or rel_is_session
                 nodes[m_id] = {
                     "id": m_id,
                     "group": (
                         row["target_labels"][0] if row["target_labels"] else "Entity"
                     ),
                     "name": row["target_name"] or "Unknown",
-                    "isGlobal": row.get("target_session") == "global"
+                    "isGlobal": not is_session_node  # Show green if touched in session
                 }
+            else:
+                # If node appears in a session relationship, mark as session node  
+                if row.get("target_session") == session_id or rel_is_session:
+                    nodes[m_id]["isGlobal"] = False
 
             # Process relationship
             edges.append(

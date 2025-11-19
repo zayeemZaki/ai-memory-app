@@ -25,63 +25,197 @@ function App() {
   };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.header}>🧠 AI Memory System</h1>
-      <p style={styles.subtitle}>Chat naturally - I'll understand whether you're adding facts or asking questions</p>
-      
-      {/* Unified Chat Interface */}
+    <div style={styles.app}>
+      {/* Header Bar */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div style={styles.logo}>
+            <span style={styles.logoIcon}>🧠</span>
+            <span style={styles.logoText}>AI Memory System</span>
+          </div>
+          <div style={styles.headerSubtitle}>Intelligent Knowledge Graph</div>
+        </div>
+      </header>
+
       {sessionId ? (
-        <>
-          <div style={styles.chatSection}>
+        <div style={styles.mainContent}>
+          {/* Left Panel - Chat Interface */}
+          <div style={styles.leftPanel}>
             <ChatInterface onGraphUpdate={handleGraphUpdate} sessionId={sessionId} />
           </div>
 
-          {/* Knowledge Graph Visualization at Bottom */}
-          <div style={styles.graphContainer}>
-            <KnowledgeGraph refreshTrigger={refreshKey} sessionId={sessionId} />
+          {/* Right Panel - Knowledge Graph */}
+          <div style={styles.rightPanel}>
+            <div style={styles.graphWrapper}>
+              <div style={styles.graphHeader}>
+                <h3 style={styles.graphTitle}>Knowledge Graph</h3>
+                <div style={styles.graphSubtitle}>Real-time visualization</div>
+              </div>
+              <KnowledgeGraph refreshTrigger={refreshKey} sessionId={sessionId} />
+            </div>
           </div>
-        </>
+        </div>
       ) : (
-        <div style={styles.loading}>Initializing session...</div>
+        <div style={styles.loading}>
+          <div style={styles.loadingSpinner}></div>
+          <div style={styles.loadingText}>Initializing session...</div>
+        </div>
       )}
+
+      {/* Footer Branding */}
+      <footer style={styles.footer}>
+        <span style={styles.footerText}>Developed by Zayeem</span>
+        <span style={styles.footerIcon}>✨</span>
+      </footer>
     </div>
   );
 }
 
 const styles = {
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '20px',
-    fontFamily: 'system-ui, -apple-system, sans-serif'
+  app: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    backgroundColor: '#f8f9fa',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    overflow: 'hidden'
   },
   header: {
-    textAlign: 'center',
-    marginBottom: '10px',
-    color: '#333',
-    fontSize: '32px'
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #e1e4e8',
+    padding: '20px 40px',
+    boxShadow: '0 1px 0 rgba(0, 0, 0, 0.03)',
+    zIndex: 10
   },
-  subtitle: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: '16px',
-    marginBottom: '30px'
+  headerContent: {
+    maxWidth: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
-  chatSection: {
-    marginBottom: '40px'
+  logo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px'
   },
-  graphContainer: {
-    marginTop: '40px',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    padding: '20px',
-    backgroundColor: '#fff'
+  logoIcon: {
+    fontSize: '32px',
+    lineHeight: 1,
+    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+  },
+  logoText: {
+    fontSize: '22px',
+    fontWeight: 700,
+    color: '#0f1419',
+    letterSpacing: '-0.03em',
+    background: 'linear-gradient(135deg, #0f1419 0%, #3b82f6 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text'
+  },
+  headerSubtitle: {
+    fontSize: '13px',
+    color: '#57606a',
+    fontWeight: 500,
+    letterSpacing: '0.01em'
+  },
+  mainContent: {
+    display: 'flex',
+    flex: 1,
+    width: '100%',
+    gap: '0',
+    overflow: 'hidden'
+  },
+  leftPanel: {
+    width: '40%',
+    minWidth: '400px',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#ffffff',
+    borderRight: '1px solid #e1e4e8',
+    overflow: 'hidden',
+    boxShadow: '1px 0 0 rgba(0, 0, 0, 0.02)'
+  },
+  rightPanel: {
+    width: '60%',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#fafbfc',
+    overflow: 'hidden',
+    position: 'relative'
+  },
+  graphWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    position: 'sticky',
+    top: 0
+  },
+  graphHeader: {
+    padding: '28px 40px 20px',
+    borderBottom: '1px solid #e1e4e8',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 1px 0 rgba(0, 0, 0, 0.02)'
+  },
+  graphTitle: {
+    margin: 0,
+    fontSize: '19px',
+    fontWeight: 700,
+    color: '#0f1419',
+    letterSpacing: '-0.02em'
+  },
+  graphSubtitle: {
+    fontSize: '13px',
+    color: '#57606a',
+    marginTop: '6px',
+    fontWeight: 400
   },
   loading: {
-    textAlign: 'center',
-    padding: '40px',
-    color: '#666',
-    fontSize: '16px'
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    gap: '20px'
+  },
+  loadingSpinner: {
+    width: '48px',
+    height: '48px',
+    border: '4px solid #e1e4e8',
+    borderTop: '4px solid #3b82f6',
+    borderRadius: '50%',
+    animation: 'spin 0.8s linear infinite'
+  },
+  loadingText: {
+    fontSize: '15px',
+    color: '#57606a',
+    fontWeight: 500,
+    letterSpacing: '0.01em'
+  },
+  footer: {
+    position: 'fixed',
+    bottom: '24px',
+    right: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 20px',
+    backgroundColor: '#ffffff',
+    border: '1px solid #e1e4e8',
+    borderRadius: '30px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)',
+    zIndex: 100,
+    transition: 'all 0.2s ease'
+  },
+  footerText: {
+    fontSize: '13px',
+    color: '#57606a',
+    fontWeight: 600,
+    letterSpacing: '0.01em'
+  },
+  footerIcon: {
+    fontSize: '16px',
+    lineHeight: 1
   }
 };
 
