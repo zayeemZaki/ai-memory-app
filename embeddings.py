@@ -25,27 +25,27 @@ class EmbeddingService:
         
         prompt = f"""You are a knowledge graph extraction system. Analyze the following text and extract entities (nodes) and their relationships (edges).
 
-Return ONLY valid JSON in this exact format:
-{{
-  "nodes": [
-    {{"id": "unique_id", "label": "EntityType", "properties": {{"name": "entity_name", "other_property": "value"}}}}
-  ],
-  "edges": [
-    {{"from": "node_id", "to": "node_id", "type": "RELATIONSHIP_TYPE", "properties": {{}}}}
-  ]
-}}
+                Return ONLY valid JSON in this exact format:
+                {{
+                "nodes": [
+                    {{"id": "unique_id", "label": "EntityType", "properties": {{"name": "entity_name", "other_property": "value"}}}}
+                ],
+                "edges": [
+                    {{"from": "node_id", "to": "node_id", "type": "RELATIONSHIP_TYPE", "properties": {{}}}}
+                ]
+                }}
 
-Rules:
-1. Use descriptive labels like Person, Company, Location, Concept, etc.
-2. Each node must have a unique id (use lowercase with underscores)
-3. Each node must have a "name" property at minimum
-4. Relationship types should be UPPERCASE_WITH_UNDERSCORES
-5. Extract meaningful relationships between entities
-6. Return ONLY the JSON, no other text
+                Rules:
+                1. Use descriptive labels like Person, Company, Location, Concept, etc.
+                2. Each node must have a unique id (use lowercase with underscores)
+                3. Each node must have a "name" property at minimum
+                4. Relationship types should be UPPERCASE_WITH_UNDERSCORES
+                5. Extract meaningful relationships between entities
+                6. Return ONLY the JSON, no other text
 
-Text: {text}
+                Text: {text}
 
-JSON:"""
+                JSON:"""
         
         response = self.client.models.generate_content(
             model="gemini-2.0-flash-exp",
@@ -90,30 +90,24 @@ JSON:"""
 
         # 2. The Prompt
         prompt = f"""
-        You are a Neo4j Cypher Query Expert. Convert the following natural language question into a valid Cypher query.
+        You are a Neo4j Cypher Query Expert. Convert the user's question into a Cypher query.
         
+        CRITICAL: You must ONLY use the Node Labels and Relationship Types defined in the schema below. 
+        Do not invent new relationship types. If a user asks "Where does he live", look for 'LIVES_IN', 'RESIDES_AT', etc. in the schema and use the closest match.
+
         {schema_context}
-        
+
         Question: "{question}"
         
         Rules:
-        1. When relationship type is uncertain or could vary (present/past tense), use a flexible pattern with regex:
-           - For work relationships: -[r:WORKS_AT|WORKED_AT]->
-           - Or match ANY relationship: -[r]-> and filter in WHERE if needed
-        2. Always perform case-insensitive search on 'name' property using toLower()
-        3. RETURN the answer directly (e.g., node names or properties)
-        4. Do NOT return JSON or Markdown. Return ONLY the raw Cypher query string
-        5. Prefer matching multiple relationship types over being too specific
-        
-        Example Question: "Where does Alice work?" or "Where did Alice work?"
-        Example Cypher: MATCH (p)-[r:WORKS_AT|WORKED_AT]->(c) WHERE toLower(p.name) CONTAINS 'alice' RETURN c.name
-        
-        Example Question: "What companies does Alice know about?"
-        Example Cypher: MATCH (p)-[r]-(c:Company) WHERE toLower(p.name) CONTAINS 'alice' RETURN c.name, type(r)
+        1. Use 'MATCH' to find patterns.
+        2. WHERE clause: Always use 'toLower(n.name) CONTAINS "value"' for flexible matching.
+        3. RETURN the specific answer (e.g., the node's name), not the whole node.
+        4. Return ONLY the raw Cypher string.
         
         Cypher Query:
-        """
-        
+        """   
+
         response = self.client.models.generate_content(
             model="gemini-2.0-flash-exp",
             contents=prompt

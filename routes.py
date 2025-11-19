@@ -158,12 +158,12 @@ async def ask_question(q: str = Query(..., min_length=1)):
     GET endpoint that answers natural language questions using the Knowledge Graph.
     """
     try:
-        # 1. Generate Cypher query from natural language
-        cypher_query = embedding_service.generate_cypher_query(q)
-        
-        # 2. Execute the query against the graph
+        current_schema = db.get_schema()
+
+        cypher_query = embedding_service.generate_cypher_query(q, current_schema)        
+
         results = db.execute_cypher(cypher_query)
-        
+
         return {
             "success": True,
             "question": q,

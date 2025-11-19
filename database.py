@@ -177,6 +177,23 @@ class Neo4jDatabase:
             result = session.run(query)
             # Convert Neo4j records to a standard list of dictionaries
             return [record.data() for record in result]
+        
+    def get_schema(self) -> str:
+        """Fetch the current graph schema (labels and relationships)"""
+        with self.driver.session(database=config.NEO4J_DATABASE) as session:
+            # Get all unique labels
+            labels_result = session.run("CALL db.labels()")
+            labels = [record["label"] for record in labels_result]
+            
+            # Get all unique relationship types
+            rels_result = session.run("CALL db.relationshipTypes()")
+            rels = [record["relationshipType"] for record in rels_result]
+            
+            return f"""
+            Current Graph Schema:
+            - Node Labels: {', '.join(labels)}
+            - Relationship Types: {', '.join(rels)}
+            """
 
 # Global database instance
 db = Neo4jDatabase()
