@@ -11,7 +11,12 @@ const api = axios.create({
     }
 });
 
-function ChatInterface({ onGraphUpdate }) {
+// Generate unique session ID
+const generateSessionId = () => {
+    return `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+};
+
+function ChatInterface({ onGraphUpdate, sessionId }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -74,7 +79,8 @@ function ChatInterface({ onGraphUpdate }) {
 
             const response = await api.post('/chat', {
                 message: input,
-                history: history // <--- The new magic field
+                history: history,
+                session_id: sessionId
             });
 
             const { action, response: aiResponse, details } = response.data;
@@ -341,3 +347,4 @@ const styles = {
 };
 
 export default ChatInterface;
+export { generateSessionId };

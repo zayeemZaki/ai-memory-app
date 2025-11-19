@@ -6,7 +6,7 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const API_KEY = import.meta.env.VITE_API_SECRET || "default-dev-secret";
 
-const KnowledgeGraph = ({ refreshTrigger }) => {
+const KnowledgeGraph = ({ refreshTrigger, sessionId }) => {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
     const graphRef = useRef();
 
@@ -17,6 +17,9 @@ const KnowledgeGraph = ({ refreshTrigger }) => {
             const response = await axios.get(`${API_BASE_URL}/graph`, {
                 headers: {
                     'x-api-key': API_KEY
+                },
+                params: {
+                    session_id: sessionId
                 }
             });
 
@@ -36,14 +39,20 @@ const KnowledgeGraph = ({ refreshTrigger }) => {
 
     return (
         <div style={{ border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-            <h3 style={{ padding: '10px', borderBottom: '1px solid #eee', margin: 0 }}>Knowledge Graph</h3>
+            <h3 style={{ padding: '10px', borderBottom: '1px solid #eee', margin: 0 }}>
+                Knowledge Graph
+                <span style={{ fontSize: '12px', marginLeft: '10px', color: '#666' }}>
+                    🔵 Global | 🟢 Your Session
+                </span>
+            </h3>
             <ForceGraph2D
                 ref={graphRef}
                 width={800}
                 height={400}
                 graphData={graphData}
-                nodeLabel="name"
-                nodeAutoColorBy="group"
+                nodeLabel={(node) => `${node.name}${node.isGlobal ? ' (Global)' : ' (Session)'}`}
+                nodeColor={(node) => node.isGlobal ? '#4a90e2' : '#4CAF50'}
+                nodeRelSize={6}
                 linkDirectionalArrowLength={6}
                 linkDirectionalArrowRelPos={1}
                 linkLabel="name"

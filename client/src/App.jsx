@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
-import ChatInterface from './ChatInterface';
+import ChatInterface, { generateSessionId } from './ChatInterface';
 import KnowledgeGraph from './KnowledgeGraph';
 
 function App() {
   // Graph refresh trigger
   const [refreshKey, setRefreshKey] = useState(0);
+  // Session ID for sandboxing
+  const [sessionId, setSessionId] = useState(null);
+
+  // Generate session ID on mount
+  useEffect(() => {
+    const newSessionId = generateSessionId();
+    setSessionId(newSessionId);
+    console.log('Session ID:', newSessionId);
+  }, []);
 
   const handleGraphUpdate = () => {
     setRefreshKey(k => k + 1);
@@ -17,14 +26,20 @@ function App() {
       <p style={styles.subtitle}>Chat naturally - I'll understand whether you're adding facts or asking questions</p>
       
       {/* Unified Chat Interface */}
-      <div style={styles.chatSection}>
-        <ChatInterface onGraphUpdate={handleGraphUpdate} />
-      </div>
+      {sessionId ? (
+        <>
+          <div style={styles.chatSection}>
+            <ChatInterface onGraphUpdate={handleGraphUpdate} sessionId={sessionId} />
+          </div>
 
-      {/* Knowledge Graph Visualization at Bottom */}
-      <div style={styles.graphContainer}>
-        <KnowledgeGraph refreshTrigger={refreshKey} />
-      </div>
+          {/* Knowledge Graph Visualization at Bottom */}
+          <div style={styles.graphContainer}>
+            <KnowledgeGraph refreshTrigger={refreshKey} sessionId={sessionId} />
+          </div>
+        </>
+      ) : (
+        <div style={styles.loading}>Initializing session...</div>
+      )}
     </div>
   );
 }
@@ -57,6 +72,12 @@ const styles = {
     borderRadius: '8px',
     padding: '20px',
     backgroundColor: '#fff'
+  },
+  loading: {
+    textAlign: 'center',
+    padding: '40px',
+    color: '#666',
+    fontSize: '16px'
   }
 };
 

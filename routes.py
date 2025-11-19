@@ -189,6 +189,7 @@ async def chat(request: ChatRequest):
     try:
         message = request.message
         history = request.history
+        session_id = request.session_id
 
         if not message or not message.strip():
             raise HTTPException(status_code=400, detail="Message cannot be empty")
@@ -205,7 +206,7 @@ async def chat(request: ChatRequest):
 
         if intent_result["intent"] == "add_fact":
             graph_data = embedding_service.extract_graph_structure(rewritten_message)
-            result = db.create_graph_from_json(graph_data)
+            result = db.create_graph_from_json(graph_data, session_id=session_id)
 
             response_text = f"Got it! I've added that to your knowledge graph."
             if result["nodes_created"] > 0:
@@ -251,20 +252,23 @@ async def chat(request: ChatRequest):
 
 
 @router.get("/graph")
-async def get_graph_data():
+async def get_graph_data(session_id: str = Query(None)):
     """
     GET endpoint to fetch the graph data (nodes and edges) for visualization.
+    Returns global nodes (session_id='global') + session-specific nodes.
     """
     try:
-        # Fetch all nodes and relationships explicitly asking for IDs
+        # Fetch global nodes + session-specific nodes
         query = """
         MATCH (n)-[r]->(m)
-        RETURN elementId(n) as source_id, n.name as source_name, labels(n) as source_labels,
-               elementId(m) as target_id, m.name as target_name, labels(m) as target_labels,
+        WHERE (n.session_id = 'global' OR n.session_id = $session_id)
+          AND (m.session_id = 'global' OR m.session_id = $session_id)
+        RETURN elementId(n) as source_id, n.name as source_name, labels(n) as source_labels, n.session_id as source_session,
+               elementId(m) as target_id, m.name as target_name, labels(m) as target_labels, m.session_id as target_session,
                elementId(r) as rel_id, type(r) as rel_type
         LIMIT 100
         """
-        results = db.execute_cypher(query)
+        results = db.execute_cypher(query, {"session_id": session_id or "none"})
 
         # Format for frontend visualization
         nodes = {}
@@ -280,6 +284,7 @@ async def get_graph_data():
                         row["source_labels"][0] if row["source_labels"] else "Entity"
                     ),
                     "name": row["source_name"] or "Unknown",
+                    "isGlobal": row.get("source_session") == "global"
                 }
 
             # Process target node
@@ -291,6 +296,7 @@ async def get_graph_data():
                         row["target_labels"][0] if row["target_labels"] else "Entity"
                     ),
                     "name": row["target_name"] or "Unknown",
+                    "isGlobal": row.get("target_session") == "global"
                 }
 
             # Process relationship

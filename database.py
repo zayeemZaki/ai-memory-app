@@ -65,42 +65,54 @@ class Neo4jDatabase:
         result = tx.run(query, query_vector=query_vector, top_k=top_k)
         return list(result)
 
-    def create_graph_from_json(self, graph_data: dict) -> dict:
+    def create_graph_from_json(self, graph_data: dict, session_id: str = None) -> dict:
         """Create nodes and relationships from structured JSON data without duplicates"""
         with self.driver.session(database=config.NEO4J_DATABASE) as session:
-            return session.execute_write(self._create_graph_transaction, graph_data)
+            return session.execute_write(self._create_graph_transaction, graph_data, session_id)
 
     @staticmethod
-    def _create_graph_transaction(tx, graph_data: dict):
+    def _create_graph_transaction(tx, graph_data: dict, session_id: str = None):
         """Transaction function to create nodes and edges using MERGE to avoid duplicates"""
         created_nodes = []
         created_edges = []
+        
+        # Default to 'global' if no session provided
+        session_id = session_id or "global"
 
-        # Create nodes using MERGE (creates if not exists, matches if exists)
+        # --- 1. CREATE NODES ---
         for node in graph_data.get("nodes", []):
             node_id = node.get("id")
             label = node.get("label", "Entity")
             properties = node.get("properties", {})
-
-            # Build MERGE query dynamically
-            # Use 'name' property as the unique identifier for merging
             name = properties.get("name", node_id)
 
-            # Create SET clause for all properties
+            # We MERGE only on 'name' to find existing global nodes
+            # We use ON CREATE to set the session_id only if it's a NEW node
+            params = {"name": name, "session_id": session_id}
+            
+            # Build dynamic property setting
             set_clauses = []
-            params = {"name": name}
-
             for key, value in properties.items():
-                if key != "name":  # name is already in MERGE
+                if key != "name":
                     param_key = f"prop_{key}"
                     set_clauses.append(f"n.{key} = ${param_key}")
                     params[param_key] = value
+            
+            set_clause_str = ", ".join(set_clauses)
+            if set_clause_str:
+                set_clause_str = ", " + set_clause_str
 
-            # Build and execute MERGE query
-            merge_query = f"MERGE (n:{label} {{name: $name}})"
-            if set_clauses:
-                merge_query += " SET " + ", ".join(set_clauses)
-            merge_query += " SET n.updated_at = datetime() RETURN elementId(n) as element_id, n.name as name"
+            merge_query = f"""
+            MERGE (n:{label} {{name: $name}})
+            ON CREATE SET 
+                n.session_id = $session_id,
+                n.created_at = datetime(),
+                n.updated_at = datetime()
+                {set_clause_str}
+            ON MATCH SET 
+                n.updated_at = datetime()
+            RETURN elementId(n) as element_id, n.name as name
+            """
 
             result = tx.run(merge_query, **params)
             record = result.single()
@@ -112,10 +124,9 @@ class Neo4jDatabase:
                 }
             )
 
-        # Create a mapping of node_id to element_id
         node_map = {n["id"]: n["element_id"] for n in created_nodes}
 
-        # Create relationships using MERGE
+        # --- 2. CREATE RELATIONSHIPS ---
         for edge in graph_data.get("edges", []):
             from_id = edge.get("from")
             to_id = edge.get("to")
@@ -123,39 +134,40 @@ class Neo4jDatabase:
             properties = edge.get("properties", {})
 
             if from_id not in node_map or to_id not in node_map:
-                continue  # Skip if nodes don't exist
+                continue 
 
             from_element_id = node_map[from_id]
             to_element_id = node_map[to_id]
 
-            # Build MERGE query for relationship
-            # Relationships are merged based on type and connected nodes
+            # We also tag the RELATIONSHIP with the session_id
             merge_rel_query = f"""
             MATCH (from) WHERE elementId(from) = $from_element_id
             MATCH (to) WHERE elementId(to) = $to_element_id
             MERGE (from)-[r:{rel_type}]->(to)
-            SET r.updated_at = datetime()
+            ON CREATE SET 
+                r.session_id = $session_id,
+                r.created_at = datetime()
             RETURN elementId(r) as element_id
             """
 
             rel_params = {
                 "from_element_id": from_element_id,
                 "to_element_id": to_element_id,
+                "session_id": session_id
             }
 
-            # Add edge properties if any
+            # Add edge properties
             if properties:
-                set_clauses = []
+                prop_sets = []
                 for key, value in properties.items():
                     param_key = f"rel_prop_{key}"
-                    set_clauses.append(f"r.{key} = ${param_key}")
+                    prop_sets.append(f"r.{key} = ${param_key}")
                     rel_params[param_key] = value
-
-                if set_clauses:
-                    # Modify query to include property sets
+                
+                if prop_sets:
                     merge_rel_query = merge_rel_query.replace(
-                        "SET r.updated_at",
-                        "SET " + ", ".join(set_clauses) + ", r.updated_at",
+                        "r.created_at = datetime()",
+                        "r.created_at = datetime(), " + ", ".join(prop_sets)
                     )
 
             result = tx.run(merge_rel_query, **rel_params)
@@ -176,21 +188,18 @@ class Neo4jDatabase:
             "edges": created_edges,
         }
 
-    def execute_cypher(self, query: str) -> list:
+    def execute_cypher(self, query: str, params: dict = None) -> list:
         """Execute a raw Cypher query"""
         with self.driver.session(database=config.NEO4J_DATABASE) as session:
-            result = session.run(query)
-            # Convert Neo4j records to a standard list of dictionaries
+            result = session.run(query, params or {})
             return [record.data() for record in result]
 
     def get_schema(self) -> str:
-        """Fetch the current graph schema (labels and relationships)"""
+        """Fetch the current graph schema"""
         with self.driver.session(database=config.NEO4J_DATABASE) as session:
-            # Get all unique labels
             labels_result = session.run("CALL db.labels()")
             labels = [record["label"] for record in labels_result]
 
-            # Get all unique relationship types
             rels_result = session.run("CALL db.relationshipTypes()")
             rels = [record["relationshipType"] for record in rels_result]
 
@@ -200,6 +209,4 @@ class Neo4jDatabase:
             - Relationship Types: {', '.join(rels)}
             """
 
-
-# Global database instance
 db = Neo4jDatabase()

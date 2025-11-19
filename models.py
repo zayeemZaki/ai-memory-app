@@ -66,6 +66,7 @@ class AddFactResponse(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = []
+    session_id: str = None
 
 class ChatResponse(BaseModel):
     success: bool
