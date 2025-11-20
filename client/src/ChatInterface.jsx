@@ -55,7 +55,7 @@ function ChatInterface({ onGraphUpdate, sessionId }) {
         }, 20);
     };
 
-    const [actionType, setActionType] = useState('ask_question'); // Default to ask
+    const [actionType, setActionType] = useState('add_fact'); 
 
     const handleSend = async (overrideActionType = null) => {
         if (!input.trim() || isLoading) return;
@@ -174,6 +174,15 @@ function ChatInterface({ onGraphUpdate, sessionId }) {
                         )}
                     </div>
                 ))}
+
+                {isLoading && !streamingMessage && (
+                    <div style={styles.loaderContainer}>
+                        <div style={styles.loader}>⏳</div>
+                        <div style={styles.loaderText}>
+                            {actionType === 'add_fact' ? 'Adding fact...' : 'Searching...'}
+                        </div>
+                    </div>
+                )}
 
                 {streamingMessage && (
                     <div style={{ ...styles.message, ...styles.assistantMessage }}>
@@ -480,6 +489,30 @@ const styles = {
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
         fontWeight: 400
+    },
+    loaderContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '16px 20px',
+        backgroundColor: '#f0f7ff',
+        border: '1px solid #bfdbfe',
+        borderRadius: '16px',
+        alignSelf: 'flex-start',
+        marginRight: 'auto',
+        maxWidth: '200px',
+        animation: 'slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    },
+    loader: {
+        fontSize: '20px',
+        animation: 'spin 1s linear infinite',
+        display: 'inline-block'
+    },
+    loaderText: {
+        fontSize: '14px',
+        color: '#1e40af',
+        fontWeight: 600,
+        letterSpacing: '0.01em'
     }
 };
 
