@@ -50,21 +50,32 @@ body {
 }
 
 /* Mobile optimizations */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   body {
     font-size: 14px;
+    overflow: hidden;
   }
   
   #root {
     height: 100vh;
-    overflow: auto;
+    overflow: hidden;
+  }
+
+  /* Hide footer on mobile to avoid overlapping with nav bar */
+  footer {
+    display: none !important;
   }
 }
 
 /* Desktop optimizations */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   #root {
     overflow: hidden;
+  }
+
+  /* Hide mobile nav bar on desktop */
+  nav[style*="position: fixed"][style*="bottom: 0"] {
+    display: none !important;
   }
 }
 

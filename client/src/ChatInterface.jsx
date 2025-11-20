@@ -249,7 +249,7 @@ const styles = {
     messagesContainer: {
         flex: 'none',
         overflowY: 'visible',
-        padding: '16px 16px 20px',
+        padding: '16px 16px 120px',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
@@ -312,16 +312,17 @@ const styles = {
         fontWeight: 500
     },
     inputContainer: {
-        position: 'static',
-        bottom: 'auto',
-        left: 'auto',
-        right: 'auto',
+        position: 'sticky',
+        bottom: 0,
+        left: 0,
+        right: 0,
         padding: '16px',
         backgroundColor: '#ffffff',
-        backdropFilter: 'none',
+        backdropFilter: 'blur(10px)',
         borderTop: '1px solid #e1e4e8',
-        boxShadow: 'none',
-        marginTop: 'auto'
+        boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
+        marginTop: 'auto',
+        zIndex: 10
     },
     actionSelector: {
         display: 'flex',
