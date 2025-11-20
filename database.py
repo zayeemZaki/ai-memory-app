@@ -119,7 +119,10 @@ class Neo4jDatabase:
                 {set_clause_str}
             ON MATCH SET 
                 n.name = $name,
-                n.session_id = $session_id,
+                n.session_id = CASE
+                    WHEN n.session_id = 'global' THEN 'global'
+                    ELSE $session_id
+                END,
                 n.updated_at = datetime()
             RETURN elementId(n) as element_id, n.name as name
             """
