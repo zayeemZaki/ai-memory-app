@@ -187,7 +187,7 @@ function ChatInterface({ onGraphUpdate, sessionId }) {
                 <div ref={messagesEndRef} />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={styles.inputContainer} className="chat-input-container">
                 <div style={styles.actionSelector}>
                     <button
                         style={{
@@ -240,21 +240,23 @@ const styles = {
     container: {
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100%',
-        height: 'auto',
+        height: '100%',
         backgroundColor: '#ffffff',
-        overflow: 'visible',
+        overflow: 'hidden',
         position: 'relative'
     },
     messagesContainer: {
-        flex: 'none',
-        overflowY: 'visible',
-        padding: '16px 16px 120px',
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        padding: '16px',
+        paddingBottom: '16px',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
         backgroundColor: '#fafbfc',
-        minHeight: '40vh'
+        WebkitOverflowScrolling: 'touch',
+        minHeight: 0
     },
     message: {
         display: 'flex',
@@ -312,16 +314,15 @@ const styles = {
         fontWeight: 500
     },
     inputContainer: {
-        position: 'sticky',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        position: 'relative',
+        flexShrink: 0,
         padding: '16px',
+        paddingBottom: 'calc(16px + 70px + env(safe-area-inset-bottom))',
         backgroundColor: '#ffffff',
         backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         borderTop: '1px solid #e1e4e8',
         boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
-        marginTop: 'auto',
         zIndex: 10
     },
     actionSelector: {

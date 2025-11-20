@@ -44,20 +44,42 @@ body {
   overscroll-behavior-y: contain;
 }
 
+html {
+  height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
+}
+
+body {
+  height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
+}
+
 #root {
   height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
   overflow: hidden;
 }
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
+  html {
+    height: 100dvh;
+    height: -webkit-fill-available;
+  }
+
   body {
     font-size: 14px;
     overflow: hidden;
+    height: 100dvh;
+    height: -webkit-fill-available;
   }
   
   #root {
-    height: 100vh;
+    height: 100dvh;
+    height: -webkit-fill-available;
     overflow: hidden;
   }
 
@@ -65,17 +87,33 @@ body {
   footer {
     display: none !important;
   }
+
+  /* Chat input with safe area support for mobile */
+  .chat-input-container {
+    padding-bottom: calc(16px + 70px + env(safe-area-inset-bottom)) !important;
+  }
 }
 
 /* Desktop optimizations */
 @media (min-width: 769px) {
+  html, body {
+    height: 100vh;
+    overflow: hidden;
+  }
+
   #root {
+    height: 100vh;
     overflow: hidden;
   }
 
   /* Hide mobile nav bar on desktop */
   nav[style*="position: fixed"][style*="bottom: 0"] {
     display: none !important;
+  }
+
+  /* Desktop chat input - no extra padding needed */
+  .chat-input-container {
+    padding-bottom: 16px !important;
   }
 }
 

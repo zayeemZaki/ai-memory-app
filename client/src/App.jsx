@@ -155,7 +155,8 @@ const styles = {
   app: {
     display: 'flex',
     flexDirection: 'column',
-    height: '100vh',
+    height: '100dvh', // Dynamic viewport height for mobile browsers
+    minHeight: '-webkit-fill-available',
     backgroundColor: '#f8f9fa',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     overflow: 'hidden',
@@ -208,18 +209,22 @@ const styles = {
     display: 'flex',
     flex: 1,
     width: '100%',
+    height: '100%',
     gap: '0',
     overflow: 'hidden',
     flexDirection: 'row',
-    position: 'relative'
+    position: 'relative',
+    minHeight: 0 // Critical for flex children to respect parent height
   },
   mobileMainContent: {
     display: 'flex',
     flex: 1,
     width: '100%',
+    height: '100%',
     flexDirection: 'column',
     overflow: 'hidden',
-    position: 'relative'
+    position: 'relative',
+    minHeight: 0
   },
   mobileTabContent: {
     width: '100%',
@@ -227,27 +232,32 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#ffffff',
-    overflow: 'auto',
-    WebkitOverflowScrolling: 'touch',
-    paddingBottom: '70px' // Exact space for bottom nav bar
+    overflow: 'hidden',
+    position: 'relative'
   },
   leftPanel: {
     width: '40%',
     minWidth: '400px',
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#ffffff',
     borderRight: '1px solid #e1e4e8',
     overflow: 'hidden',
-    boxShadow: '1px 0 0 rgba(0, 0, 0, 0.02)'
+    boxShadow: '1px 0 0 rgba(0, 0, 0, 0.02)',
+    flex: 1,
+    minHeight: 0
   },
   rightPanel: {
     width: '60%',
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#fafbfc',
     overflow: 'hidden',
-    position: 'relative'
+    position: 'relative',
+    flex: 1,
+    minHeight: 0
   },
   graphWrapper: {
     display: 'flex',
@@ -328,13 +338,13 @@ const styles = {
     bottom: 0,
     left: 0,
     right: 0,
-    height: '70px',
     backgroundColor: '#ffffff',
     borderTop: '1px solid #e1e4e8',
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: '8px 16px',
+    padding: '8px 16px calc(8px + env(safe-area-inset-bottom))',
+    paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
     boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.08)',
     zIndex: 1000,
     backdropFilter: 'blur(10px)',
