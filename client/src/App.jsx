@@ -83,7 +83,7 @@ const styles = {
   header: {
     backgroundColor: '#ffffff',
     borderBottom: '1px solid #e1e4e8',
-    padding: '20px 40px',
+    padding: '16px 20px',
     boxShadow: '0 1px 0 rgba(0, 0, 0, 0.03)',
     zIndex: 10
   },
@@ -91,20 +91,22 @@ const styles = {
     maxWidth: '100%',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '8px'
   },
   logo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '14px'
+    gap: '10px'
   },
   logoIcon: {
-    fontSize: '32px',
+    fontSize: '24px',
     lineHeight: 1,
     filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
   },
   logoText: {
-    fontSize: '22px',
+    fontSize: '18px',
     fontWeight: 700,
     color: '#0f1419',
     letterSpacing: '-0.03em',
@@ -114,60 +116,68 @@ const styles = {
     backgroundClip: 'text'
   },
   headerSubtitle: {
-    fontSize: '13px',
+    fontSize: '12px',
     color: '#57606a',
     fontWeight: 500,
-    letterSpacing: '0.01em'
+    letterSpacing: '0.01em',
+    display: 'none'
   },
   mainContent: {
     display: 'flex',
     flex: 1,
     width: '100%',
     gap: '0',
-    overflow: 'hidden'
+    overflow: 'auto',
+    flexDirection: 'column',
+    WebkitOverflowScrolling: 'touch'
   },
   leftPanel: {
-    width: '40%',
-    minWidth: '400px',
+    width: '100%',
+    minWidth: 'unset',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#ffffff',
-    borderRight: '1px solid #e1e4e8',
-    overflow: 'hidden',
-    boxShadow: '1px 0 0 rgba(0, 0, 0, 0.02)'
+    borderRight: 'none',
+    borderBottom: 'none',
+    overflow: 'visible',
+    boxShadow: 'none',
+    minHeight: '60vh',
+    flex: 'none'
   },
   rightPanel: {
-    width: '60%',
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#fafbfc',
-    overflow: 'hidden',
-    position: 'relative'
+    overflow: 'visible',
+    position: 'relative',
+    minHeight: '70vh',
+    flex: 'none'
   },
   graphWrapper: {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
-    position: 'sticky',
-    top: 0
+    minHeight: '70vh',
+    position: 'relative'
   },
   graphHeader: {
-    padding: '28px 40px 20px',
+    padding: '16px 20px 12px',
     borderBottom: '1px solid #e1e4e8',
     backgroundColor: '#ffffff',
     boxShadow: '0 1px 0 rgba(0, 0, 0, 0.02)'
   },
   graphTitle: {
     margin: 0,
-    fontSize: '19px',
+    fontSize: '16px',
     fontWeight: 700,
     color: '#0f1419',
     letterSpacing: '-0.02em'
   },
   graphSubtitle: {
-    fontSize: '13px',
+    fontSize: '12px',
     color: '#57606a',
-    marginTop: '6px',
+    marginTop: '4px',
     fontWeight: 400
   },
   loading: {
@@ -194,29 +204,61 @@ const styles = {
   },
   footer: {
     position: 'fixed',
-    bottom: '24px',
-    right: '40px',
+    bottom: '12px',
+    right: '12px',
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-    padding: '10px 20px',
+    gap: '8px',
+    padding: '8px 16px',
     backgroundColor: '#ffffff',
     border: '1px solid #e1e4e8',
-    borderRadius: '30px',
+    borderRadius: '24px',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)',
     zIndex: 100,
     transition: 'all 0.2s ease'
   },
   footerText: {
-    fontSize: '13px',
+    fontSize: '11px',
     color: '#57606a',
     fontWeight: 600,
     letterSpacing: '0.01em'
   },
   footerIcon: {
-    fontSize: '16px',
+    fontSize: '14px',
     lineHeight: 1
   }
 };
+
+// Media query for desktop
+if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+  styles.headerSubtitle.display = 'block';
+  styles.mainContent.flexDirection = 'row';
+  styles.mainContent.overflow = 'hidden';
+  styles.leftPanel.width = '40%';
+  styles.leftPanel.minWidth = '400px';
+  styles.leftPanel.borderRight = '1px solid #e1e4e8';
+  styles.leftPanel.borderBottom = 'none';
+  styles.leftPanel.boxShadow = '1px 0 0 rgba(0, 0, 0, 0.02)';
+  styles.leftPanel.height = 'auto';
+  styles.leftPanel.minHeight = 'unset';
+  styles.leftPanel.overflow = 'hidden';
+  styles.rightPanel.width = '60%';
+  styles.rightPanel.height = 'auto';
+  styles.rightPanel.minHeight = 'unset';
+  styles.rightPanel.overflow = 'hidden';
+  styles.graphWrapper.minHeight = '100%';
+  styles.header.padding = '20px 40px';
+  styles.logoIcon.fontSize = '32px';
+  styles.logoText.fontSize = '22px';
+  styles.headerSubtitle.fontSize = '13px';
+  styles.graphHeader.padding = '28px 40px 20px';
+  styles.graphTitle.fontSize = '19px';
+  styles.graphSubtitle.fontSize = '13px';
+  styles.footer.bottom = '24px';
+  styles.footer.right = '40px';
+  styles.footer.padding = '10px 20px';
+  styles.footerText.fontSize = '13px';
+  styles.footerIcon.fontSize = '16px';
+}
 
 export default App;

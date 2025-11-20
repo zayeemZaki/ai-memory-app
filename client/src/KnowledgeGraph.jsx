@@ -216,26 +216,28 @@ const styles = {
     container: {
         width: '100%',
         height: '100%',
+        minHeight: '70vh',
         overflow: 'hidden',
         position: 'relative',
         backgroundColor: '#fafbfc'
     },
     legend: {
         position: 'absolute',
-        top: '20px',
-        right: '24px',
-        background: 'rgba(255, 255, 255, 0.98)',
+        top: '12px',
+        left: '12px',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(12px)',
-        padding: '12px 20px',
-        borderRadius: '14px',
+        padding: '10px 14px',
+        borderRadius: '12px',
         border: '1px solid #e1e4e8',
         display: 'flex',
-        gap: '20px',
-        fontSize: '12.5px',
+        gap: '10px',
+        fontSize: '11px',
         zIndex: 10,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)',
         fontWeight: 600,
-        letterSpacing: '0.01em'
+        letterSpacing: '0.01em',
+        flexDirection: 'row'
     },
     legendItem: {
         display: 'flex',

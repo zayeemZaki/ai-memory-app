@@ -137,10 +137,10 @@ function ChatInterface({ onGraphUpdate, sessionId }) {
                             Just type naturally!
                         </p>
                         <div style={styles.examples}>
-                            <div style={styles.exampleLabel}>Try asking:</div>
-                            <div style={styles.exampleItem}>"Alice works at Google"</div>
-                            <div style={styles.exampleItem}>"Where does Alice work?"</div>
-                            <div style={styles.exampleItem}>"Bob is friends with Alice"</div>
+                            <div style={styles.exampleLabel}>Try this:</div>
+                            <div style={styles.exampleItem}>"Zayeem is passionate about AI"</div>
+                            <div style={styles.exampleItem}>"What is Zayeem passionate about?"</div>
+                            <div style={styles.exampleItem}>"Zayeem loves System Design"</div>
                         </div>
                     </div>
                 )}
@@ -240,19 +240,21 @@ const styles = {
     container: {
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        minHeight: '100%',
+        height: 'auto',
         backgroundColor: '#ffffff',
-        overflow: 'hidden',
+        overflow: 'visible',
         position: 'relative'
     },
     messagesContainer: {
-        flex: 1,
-        overflowY: 'auto',
-        padding: '32px 28px 140px',
+        flex: 'none',
+        overflowY: 'visible',
+        padding: '16px 16px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
-        backgroundColor: '#fafbfc'
+        gap: '16px',
+        backgroundColor: '#fafbfc',
+        minHeight: '40vh'
     },
     message: {
         display: 'flex',
@@ -310,28 +312,31 @@ const styles = {
         fontWeight: 500
     },
     inputContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: '24px 28px 28px',
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-        backdropFilter: 'blur(12px)',
+        position: 'static',
+        bottom: 'auto',
+        left: 'auto',
+        right: 'auto',
+        padding: '16px',
+        backgroundColor: '#ffffff',
+        backdropFilter: 'none',
         borderTop: '1px solid #e1e4e8',
-        boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.04)'
+        boxShadow: 'none',
+        marginTop: 'auto'
     },
     actionSelector: {
-        display: 'inline-flex',
+        display: 'flex',
         backgroundColor: '#f6f8fa',
-        borderRadius: '14px',
-        padding: '5px',
-        marginBottom: '18px',
+        borderRadius: '12px',
+        padding: '4px',
+        marginBottom: '14px',
         border: '1px solid #e1e4e8',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)'
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+        width: '100%'
     },
     actionButton: {
-        padding: '10px 22px',
-        fontSize: '13.5px',
+        padding: '10px 16px',
+        fontSize: '13px',
+        flex: 1,
         border: 'none',
         borderRadius: '10px',
         backgroundColor: 'transparent',
@@ -387,16 +392,17 @@ const styles = {
         backgroundColor: '#3b82f6',
         color: 'white',
         border: 'none',
-        borderRadius: '14px',
+        borderRadius: '12px',
         cursor: 'pointer',
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        width: '44px',
-        height: '44px',
+        minWidth: '48px',
+        minHeight: '48px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 6px rgba(59, 130, 246, 0.3)'
+        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 6px rgba(59, 130, 246, 0.3)',
+        touchAction: 'manipulation'
     },
     sendButtonHover: {
         backgroundColor: '#2563eb',
@@ -415,8 +421,8 @@ const styles = {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '100%',
-        padding: '48px 32px'
+        minHeight: '40vh',
+        padding: '32px 20px'
     },
     emptyIcon: {
         fontSize: '64px',
