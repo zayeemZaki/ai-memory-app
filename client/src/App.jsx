@@ -244,7 +244,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    paddingBottom: 'calc(60px + env(safe-area-inset-bottom))'
+    paddingBottom: 'calc(20px + env(safe-area-inset-bottom))'
   },
   leftPanel: {
     width: '40%',
