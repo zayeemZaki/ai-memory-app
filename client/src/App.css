@@ -28,59 +28,65 @@
   }
 }
 
-/* Global Styles */
+/* Global Styles - STRICT VIEWPORT LOCK */
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
-  overscroll-behavior-y: contain;
-}
-
-html {
-  height: 100vh;
-  height: 100dvh;
-  height: -webkit-fill-available;
-}
-
-body {
-  height: 100vh;
-  height: 100dvh;
-  height: -webkit-fill-available;
+  overscroll-behavior: none;
 }
 
 #root {
-  height: 100vh;
+  width: 100%;
   height: 100dvh;
-  height: -webkit-fill-available;
+  height: 100%;
   overflow: hidden;
+  position: relative;
 }
 
-/* Mobile optimizations */
+/* Mobile optimizations - STRICT NO SCROLL */
 @media (max-width: 768px) {
   html {
     height: 100dvh;
-    height: -webkit-fill-available;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 
   body {
     font-size: 14px;
     overflow: hidden;
     height: 100dvh;
-    height: -webkit-fill-available;
+    position: fixed;
+    width: 100%;
   }
   
   #root {
     height: 100dvh;
-    height: -webkit-fill-available;
     overflow: hidden;
+    position: relative;
   }
 
   /* Hide footer on mobile to avoid overlapping with nav bar */
@@ -88,22 +94,25 @@ body {
     display: none !important;
   }
 
-  /* Chat input with safe area support for mobile */
+  /* Mobile chat input - add bottom padding for nav bar */
   .chat-input-container {
-    padding-bottom: calc(16px + 70px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(58px + max(8px, env(safe-area-inset-bottom))) !important;
   }
 }
 
-/* Desktop optimizations */
+/* Desktop optimizations - STRICT NO SCROLL */
 @media (min-width: 769px) {
   html, body {
     height: 100vh;
     overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 
   #root {
     height: 100vh;
     overflow: hidden;
+    position: relative;
   }
 
   /* Hide mobile nav bar on desktop */
@@ -111,7 +120,7 @@ body {
     display: none !important;
   }
 
-  /* Desktop chat input - no extra padding needed */
+  /* Desktop chat input - standard padding */
   .chat-input-container {
     padding-bottom: 16px !important;
   }
@@ -134,20 +143,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
-}
-
-/* Canvas roundRect polyfill for older browsers */
-if (typeof CanvasRenderingContext2D !== 'undefined') {
-  CanvasRenderingContext2D.prototype.roundRect = CanvasRenderingContext2D.prototype.roundRect || function (x, y, w, h, r) {
-    if (w < 2 * r) r = w / 2;
-    if (h < 2 * r) r = h / 2;
-    this.beginPath();
-    this.moveTo(x + r, y);
-    this.arcTo(x + w, y, x + w, y + h, r);
-    this.arcTo(x + w, y + h, x, y + h, r);
-    this.arcTo(x, y + h, x, y, r);
-    this.arcTo(x, y, x + w, y, r);
-    this.closePath();
-    return this;
-  };
 }

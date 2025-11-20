@@ -241,22 +241,25 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
+        width: '100%',
         backgroundColor: '#ffffff',
         overflow: 'hidden',
-        position: 'relative'
+        position: 'relative',
+        flex: '1 1 0',
+        minHeight: 0
     },
     messagesContainer: {
-        flex: 1,
+        flex: '1 1 0',
         overflowY: 'auto',
         overflowX: 'hidden',
         padding: '16px',
-        paddingBottom: '16px',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
         backgroundColor: '#fafbfc',
         WebkitOverflowScrolling: 'touch',
-        minHeight: 0
+        minHeight: 0,
+        position: 'relative'
     },
     message: {
         display: 'flex',
@@ -316,8 +319,9 @@ const styles = {
     inputContainer: {
         position: 'relative',
         flexShrink: 0,
+        flexGrow: 0,
         padding: '16px',
-        paddingBottom: 'calc(16px + 70px + env(safe-area-inset-bottom))',
+        paddingBottom: '16px',
         backgroundColor: '#ffffff',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',

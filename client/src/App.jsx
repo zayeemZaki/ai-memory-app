@@ -155,12 +155,17 @@ const styles = {
   app: {
     display: 'flex',
     flexDirection: 'column',
-    height: '100dvh', // Dynamic viewport height for mobile browsers
-    minHeight: '-webkit-fill-available',
+    height: '100dvh',
+    width: '100%',
+    maxHeight: '100dvh',
     backgroundColor: '#f8f9fa',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     overflow: 'hidden',
-    position: 'relative'
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
   },
   header: {
     backgroundColor: '#ffffff',
@@ -168,7 +173,8 @@ const styles = {
     padding: '16px 20px',
     boxShadow: '0 1px 0 rgba(0, 0, 0, 0.03)',
     zIndex: 10,
-    flexShrink: 0
+    flexShrink: 0,
+    flexGrow: 0
   },
   headerContent: {
     maxWidth: '100%',
@@ -207,24 +213,24 @@ const styles = {
   },
   mainContent: {
     display: 'flex',
-    flex: 1,
+    flex: '1 1 0',
     width: '100%',
-    height: '100%',
     gap: '0',
     overflow: 'hidden',
     flexDirection: 'row',
     position: 'relative',
-    minHeight: 0 // Critical for flex children to respect parent height
+    minHeight: 0,
+    minWidth: 0
   },
   mobileMainContent: {
     display: 'flex',
-    flex: 1,
+    flex: '1 1 0',
     width: '100%',
-    height: '100%',
     flexDirection: 'column',
     overflow: 'hidden',
     position: 'relative',
-    minHeight: 0
+    minHeight: 0,
+    minWidth: 0
   },
   mobileTabContent: {
     width: '100%',
@@ -233,44 +239,49 @@ const styles = {
     flexDirection: 'column',
     backgroundColor: '#ffffff',
     overflow: 'hidden',
-    position: 'relative'
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
   },
   leftPanel: {
     width: '40%',
     minWidth: '400px',
-    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#ffffff',
     borderRight: '1px solid #e1e4e8',
     overflow: 'hidden',
     boxShadow: '1px 0 0 rgba(0, 0, 0, 0.02)',
-    flex: 1,
+    flex: '0 0 40%',
     minHeight: 0
   },
   rightPanel: {
-    width: '60%',
-    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#fafbfc',
     overflow: 'hidden',
     position: 'relative',
-    flex: 1,
-    minHeight: 0
+    flex: '1 1 0',
+    minHeight: 0,
+    minWidth: 0
   },
   graphWrapper: {
     display: 'flex',
     flexDirection: 'column',
-    height: '100%',
     position: 'relative',
-    flex: 1
+    flex: '1 1 0',
+    minHeight: 0,
+    overflow: 'hidden'
   },
   graphHeader: {
     padding: '16px 20px 12px',
     borderBottom: '1px solid #e1e4e8',
     backgroundColor: '#ffffff',
-    boxShadow: '0 1px 0 rgba(0, 0, 0, 0.02)'
+    boxShadow: '0 1px 0 rgba(0, 0, 0, 0.02)',
+    flexShrink: 0,
+    flexGrow: 0
   },
   graphTitle: {
     margin: 0,
@@ -343,8 +354,8 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: '8px 16px calc(8px + env(safe-area-inset-bottom))',
-    paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
+    padding: '8px 16px',
+    paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
     boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.08)',
     zIndex: 1000,
     backdropFilter: 'blur(10px)',
