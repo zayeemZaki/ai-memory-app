@@ -33,15 +33,19 @@ app.add_middleware(
     allow_headers=["*"], 
 )
 
-@router.get("/health", response_model=HealthResponse)
+@app.get("/health")
 async def health():
-    """Health check endpoint"""
+    """Public health check for UptimeRobot"""
     try:
+        # Check database connection
         db.driver.verify_connectivity()
-        return HealthResponse(status="healthy", neo4j="connected", gemini="configured")
+        return {
+            "status": "healthy", 
+            "neo4j": "connected", 
+            "gemini": "configured"
+        }
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
-
 
 # Include routes
 app.include_router(router)
