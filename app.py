@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from config import config
 from database import db
 from embeddings import embedding_service
+from models import HealthResponse
 from routes import router
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -31,6 +32,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"], 
 )
+
+@router.get("/health", response_model=HealthResponse)
+async def health():
+    """Health check endpoint"""
+    try:
+        db.driver.verify_connectivity()
+        return HealthResponse(status="healthy", neo4j="connected", gemini="configured")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
 
 # Include routes
 app.include_router(router)
