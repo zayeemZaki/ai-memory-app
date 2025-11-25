@@ -16,7 +16,7 @@ Live Demo: [https://ai-memory-app.vercel.app/]
 
 I designed the system to be deterministic and secure. Instead of letting the AI write database queries (which is prone to injection attacks and errors), I built a Python-based query builder that enforces strict security filters.
 
-![Architecture Diagram](public/architecture.png)
+![Architecture Diagram](client/public/architecture.png)
 
 ## Key Engineering Features
 
@@ -107,7 +107,7 @@ npm run dev
 ```
 
 ## Screenshot
-![Screenshot](public/ss.png)
+![Screenshot](client/public/ss.png)
 
 ## Author
 
