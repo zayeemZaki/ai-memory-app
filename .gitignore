@@ -40,3 +40,12 @@ wheels/
 # OS
 .DS_Store
 Thumbs.db
+
+# Additional common ignores
+# Python virtualenvs
+.venv/
+# pytest / mypy caches
+.pytest_cache/
+.mypy_cache/
+# pyenv
+.python-version
